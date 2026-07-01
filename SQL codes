@@ -1,0 +1,144 @@
+SELECT * FROM portfolio_project.`coviddeaths 2`
+order by 3,4;
+SELECT iso_Code FROM portfolio_project.`coviddeaths 2`;
+SELECT iso_code, location
+FROM portfolio_project.`coviddeaths 2`;
+select * from portfolio_project.`covidvaccinations2 csv`
+order by 3,4;
+select location, date, total_cases, new_cases, total_deaths, population
+FROM portfolio_project.`coviddeaths 2`
+order by 1,2;
+-- evaluating percentage deaths 
+-- shows propabilty of dying if you contract covid 19
+select location, date, total_cases, total_deaths, 100*(total_deaths/ total_cases) as death_percentage
+FROM portfolio_project.`coviddeaths 2`
+order by 1,2;
+-- Case Fatality Rate (CFR): How dangerous the disease was among confirmed cases
+-- Population Death Rate: How much of the country's population had died due to COVID-19 by that date.
+SELECT
+    Location,
+    Date,    
+    population,
+    total_cases,
+    total_deaths,
+    ROUND(100 * total_deaths / total_cases, 2) AS case_fatality_rate,
+    ROUND(100 * total_deaths / population, 4) AS population_death_rate
+FROM portfolio_project.`coviddeaths 2`
+ORDER BY location, date;
+-- closing in on a particular date
+SELECT
+    Location,
+    Date,    
+    population,
+    total_cases,
+    total_deaths,
+    ROUND(100 * total_deaths / total_cases, 2) AS case_fatality_rate,
+    ROUND(100 * total_deaths / population, 4) AS population_death_rate
+FROM portfolio_project.`coviddeaths 2`
+where location in ('Afghanistan','Africa', 'Albania') and date = '1/15/2021';
+select location, date, total_cases, total_deaths, 100*(total_deaths/ total_cases) as death_percentage
+FROM `portfolio_project`.`coviddeaths 2`
+where location like '%gha%'
+order by 1,2;
+SELECT location, date, total_cases, total_deaths, 
+       100 * (total_deaths / total_cases) AS death_percentage
+FROM `portfolio_project`.`coviddeaths 2`
+WHERE location='Africa'
+ORDER BY 1,2;
+select location, date, total_cases, total_deaths,
+case when total_cases > 0 then (total_deaths/ total_cases)*100
+else 0 end as death_percentage
+from `portfolio_project`.`coviddeaths 2`
+order by 1,2;
+SELECT 
+    location,
+    date,
+    total_cases,
+    total_deaths,
+    CASE 
+        WHEN total_cases > 0 
+        THEN (CAST(total_deaths AS DECIMAL(10,2)) / total_cases) * 100
+        ELSE 0 
+    END AS death_percentage
+FROM `portfolio_project`.`coviddeaths 2`
+ORDER BY 1, 2;
+
+
+-- looking at total cases vs population
+-- the percentage of population that has contracted covid
+select location, date, population, total_cases,
+case when population > 0 then (total_cases/ population)*100
+else 0 end as percentage_infections
+from `portfolio_project`.`coviddeaths 2`
+where location like 'afghanistan'
+order by 1,2;
+
+-- evaluating the running total. in this case the cummulativecases upto a certain date
+select location,date, new_cases,
+sum(new_cases) over (partition by location order by date) as cumulativecases
+ from `portfolio_project`.`coviddeaths 2`
+where location = 'Afghanistan'
+order by date;
+
+-- total new infections for afghanistan
+select location,
+sum(new_cases) from `portfolio_project`.`coviddeaths 2`
+
+where location = 'Afghanistan';
+
+-- daily totals only
+SELECT 
+    location,
+    date,
+    SUM(new_cases) AS daily_new_cases
+FROM `portfolio_project`.`coviddeaths 2`
+WHERE location = 'Afghanistan'
+GROUP BY location, date
+ORDER BY date;
+-- “look back” at the previous row’s value.
+-- This way, you can compare today’s cases to yesterday’s cases,
+-- so -- previous days' case
+SELECT 
+    location,
+    date,
+    new_cases,
+    LAG(new_cases, 1) OVER (PARTITION BY location ORDER BY date) AS previous_day_cases
+FROM `portfolio_project`.`coviddeaths 2`
+WHERE location = 'Afghanistan'
+ORDER BY date;
+
+-- lagged 2 days
+SELECT 
+    location,
+    date,
+    new_cases,
+    LAG(new_cases, 2) OVER (PARTITION BY location ORDER BY date) AS previous_2days_cases
+FROM `portfolio_project`.`coviddeaths 2`
+WHERE location = 'Afghanistan'
+ORDER BY date;
+
+-- Calculate Day-to-Day Change (Difference)
+SELECT
+    location,
+    date,
+    new_cases,
+    LAG(new_cases) OVER (PARTITION BY location ORDER BY date) AS prev_day,
+    new_cases - LAG(new_cases) OVER (PARTITION BY location ORDER BY date) AS daily_change
+FROM `portfolio_project`.`coviddeaths 2`
+ORDER BY date;
+SELECT *
+FROM `portfolio_project`.`coviddeaths 2`
+
+-- Daily Difference Using LAG()
+-- LAG(new_cases, 1) gets yesterday’s cases.
+-- difference_from_yesterday subtracts yesterday’s cases from today’s.
+
+SELECT 
+    location,
+    date,
+    new_cases,
+    LAG(new_cases, 1) OVER (PARTITION BY location ORDER BY date) AS previous_day_cases,
+    (new_cases - LAG(new_cases, 1) OVER (PARTITION BY location ORDER BY date)) AS difference_from_yesterday
+FROM `portfolio_project`.`coviddeaths 2`
+WHERE location = 'Afghanistan'
+ORDER BY date;
